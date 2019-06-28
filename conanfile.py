@@ -4,54 +4,52 @@ from conans import ConanFile, CMake, tools
 import os
 
 
-class LibnameConan(ConanFile):
-    name = "libname"
-    version = "0.0.0"
-    description = "Keep it short"
-    # topics can get used for searches, GitHub topics, Bintray tags etc. Add here keywords about the library
-    topics = ("conan", "libname", "logging")
-    url = "https://github.com/bincrafters/conan-libname"
-    homepage = "https://github.com/original_author/original_lib"
+class LibSampleRateConan(ConanFile):
+    name = "libsamplerate"
+    version = "0.1.9"
+    description = "Secret Rabbit Code (aka libsamplerate) is a Sample Rate Converter for audio"
+    topics = ("conan", "libsamplerate", "audio", "resampler", "converter")
+    url = "https://github.com/bincrafters/conan-libsamplerate"
+    homepage = "http://www.mega-nerd.com/SRC/index.html"
     author = "Bincrafters <bincrafters@gmail.com>"
-    license = "MIT"  # Indicates license type of the packaged library; please use SPDX Identifiers https://spdx.org/licenses/
-    exports = ["LICENSE.md"]      # Packages the license for the conanfile.py
-    # Remove following lines if the target lib does not use cmake.
+    license = "BSD-2-Clause	"
+    exports = ["LICENSE.md"]
     exports_sources = ["CMakeLists.txt"]
     generators = "cmake"
-
-    # Options may need to change depending on the packaged library.
     settings = "os", "arch", "compiler", "build_type"
     options = {"shared": [True, False], "fPIC": [True, False]}
     default_options = {"shared": False, "fPIC": True}
-
-    # Custom attributes for Bincrafters recipe conventions
     _source_subfolder = "source_subfolder"
     _build_subfolder = "build_subfolder"
 
-    requires = (
-        "OpenSSL/1.0.2s@conan/stable",
-        "zlib/1.2.11@conan/stable"
-    )
+    revision = "b12668ac1c0a223d0effd13447e7f7c3a6690912"
 
     def config_options(self):
         if self.settings.os == 'Windows':
             del self.options.fPIC
 
     def source(self):
-        source_url = "https://github.com/libauthor/libname"
-        tools.get("{0}/archive/v{1}.tar.gz".format(source_url, self.version), sha256="Please-provide-a-checksum")
-        extracted_dir = self.name + "-" + self.version
-
-        # Rename to "source_subfolder" is a convention to simplify later steps
+        source_url = "https://github.com/erikd/libsamplerate/"
+        tools.get("{0}/archive/{1}.zip".format(source_url, self.revision),
+                  sha256="89ddb93785b27aa9ce12a8dbbee0be535e605afa852eda91556bb881e99c0cb4")
+        extracted_dir = self.name + "-" + self.revision
         os.rename(extracted_dir, self._source_subfolder)
 
     def _configure_cmake(self):
         cmake = CMake(self)
-        cmake.definitions["BUILD_TESTS"] = False  # example
+        cmake.definitions["LIBSAMPLERATE_TESTS"] = False
+        cmake.definitions["LIBSAMPLERATE_INSTALL"] = True
+        # these dependencies are needed only for tests
+        cmake.definitions["CMAKE_DISABLE_FIND_PACKAGE_ALSA"] = True
+        cmake.definitions["CMAKE_DISABLE_FIND_PACKAGE_Sndfile"] = True
+        cmake.definitions["CMAKE_DISABLE_FIND_PACKAGE_FFTW"] = True
         cmake.configure(build_folder=self._build_subfolder)
         return cmake
 
     def build(self):
+        tools.replace_in_file(os.path.join(self._source_subfolder, "CMakeLists.txt"),
+                              "install(FILES ${CMAKE_BINARY_DIR}/samplerate.pc DESTINATION lib/pkgconfig)",
+                              "install(FILES ${CMAKE_CURRENT_BINARY_DIR}/samplerate.pc DESTINATION lib/pkgconfig)")
         cmake = self._configure_cmake()
         cmake.build()
 
@@ -59,15 +57,13 @@ class LibnameConan(ConanFile):
         self.copy(pattern="LICENSE", dst="licenses", src=self._source_subfolder)
         cmake = self._configure_cmake()
         cmake.install()
-        # If the CMakeLists.txt has a proper install method, the steps below may be redundant
-        # If so, you can just remove the lines below
-        include_folder = os.path.join(self._source_subfolder, "include")
-        self.copy(pattern="*", dst="include", src=include_folder)
-        self.copy(pattern="*.dll", dst="bin", keep_path=False)
-        self.copy(pattern="*.lib", dst="lib", keep_path=False)
-        self.copy(pattern="*.a", dst="lib", keep_path=False)
-        self.copy(pattern="*.so*", dst="lib", keep_path=False)
-        self.copy(pattern="*.dylib", dst="lib", keep_path=False)
 
     def package_info(self):
-        self.cpp_info.libs = tools.collect_libs(self)
+        self.cpp_info.libs = ["samplerate"]
+        if self.settings.os == "Windows":
+            self.cpp_info.libs.append("winmm")
+        elif self.settings.os == "Macos":
+            frameworks = ['CoreAudio']
+            for framework in frameworks:
+                self.cpp_info.exelinkflags.append("-framework %s" % framework)
+            self.cpp_info.sharedlinkflags = self.cpp_info.exelinkflags
