@@ -59,7 +59,10 @@ class LibSampleRateConan(ConanFile):
         cmake.install()
 
     def package_info(self):
-        self.cpp_info.libs = ["samplerate"]
+        if self.settings.os == "Windows" and self.options.shared:
+            self.cpp_info.libs = ["libsamplerate-0.lib"]
+        else:
+            self.cpp_info.libs = ["samplerate"]
         if self.settings.os == "Windows":
             self.cpp_info.libs.append("winmm")
         elif self.settings.os == "Macos":
