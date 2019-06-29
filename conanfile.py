@@ -61,6 +61,7 @@ class LibSampleRateConan(ConanFile):
     def package_info(self):
         if self.settings.os == "Windows" and self.options.shared:
             self.cpp_info.libs = ["libsamplerate-0.lib"]
+            self.cpp_info.bindirs.append(os.path.join(self.package_folder, "lib"))
         else:
             self.cpp_info.libs = ["samplerate"]
         if self.settings.os == "Windows":
