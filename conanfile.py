@@ -9,7 +9,6 @@ class LibSampleRateConan(ConanFile):
     topics = ("conan", "libsamplerate", "audio", "resampler", "converter")
     url = "https://github.com/bincrafters/conan-libsamplerate"
     homepage = "http://www.mega-nerd.com/SRC/index.html"
-    author = "Bincrafters <bincrafters@gmail.com>"
     license = "BSD-2-Clause	"
     exports = ["LICENSE.md"]
     exports_sources = ["CMakeLists.txt"]
