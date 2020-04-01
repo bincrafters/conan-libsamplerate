@@ -10,7 +10,6 @@ class LibSampleRateConan(ConanFile):
     url = "https://github.com/bincrafters/conan-libsamplerate"
     homepage = "http://www.mega-nerd.com/SRC/index.html"
     license = "BSD-2-Clause	"
-    exports = ["LICENSE.md"]
     exports_sources = ["CMakeLists.txt"]
     generators = "cmake"
     settings = "os", "arch", "compiler", "build_type"
